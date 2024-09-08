@@ -44,7 +44,8 @@
             download: true,
             header: true,
             complete: function(results) {
-                // Restructure the data to make it easier to work with
+                console.log('Degrees CSV Loaded:', results.data); // Debugging
+
                 degreesData = results.data.map(row => {
                     let institution = row.InstitutionName;
                     let yearsData = [];
@@ -52,7 +53,9 @@
                     // Loop through each year (e.g., 2023, 2022, etc.)
                     Object.keys(row).forEach(year => {
                         if (year !== 'InstitutionName') {
-                            yearsAvailable.push(year);
+                            if (!yearsAvailable.includes(year)) {
+                                yearsAvailable.push(year);
+                            }
                             yearsData.push({
                                 year: year,
                                 degrees: row[year],
@@ -66,6 +69,10 @@
                     return yearsData;
                 }).flat();  // Flatten the array
 
+                console.log('Degrees Data:', degreesData); // Debugging
+                console.log('University Names:', universityNames); // Debugging
+                console.log('Years Available:', yearsAvailable); // Debugging
+                
                 populateDropdowns();
                 if (facultyData.length > 0) {
                     mergeData();
@@ -78,6 +85,7 @@
             download: true,
             header: true,
             complete: function(results) {
+                console.log('Faculty CSV Loaded:', results.data); // Debugging
                 facultyData = results.data;
                 if (degreesData.length > 0) {
                     mergeData();
@@ -100,7 +108,6 @@
 
         // Populate the dropdowns with options
         function populateDropdowns() {
-            // Populate university dropdown
             const universitySelect = document.getElementById('universitySelect');
             universityNames.forEach(name => {
                 let option = document.createElement('option');
@@ -109,7 +116,6 @@
                 universitySelect.appendChild(option);
             });
 
-            // Populate year dropdowns
             const startYearSelect = document.getElementById('startYear');
             const endYearSelect = document.getElementById('endYear');
             yearsAvailable = [...new Set(yearsAvailable)].sort();  // Remove duplicates and sort
@@ -125,10 +131,12 @@
                 optionEnd.textContent = year;
                 endYearSelect.appendChild(optionEnd);
             });
+
+            console.log('Dropdowns Populated'); // Debugging
         }
 
         function processMergedData(data) {
-            console.log(data); // Check the structure of merged data
+            console.log('Processed Data:', data); // Debugging
             createChart();
         }
 
@@ -181,7 +189,7 @@
 
             } else if (plotType === 'faculty') {
                 // Plot Degrees vs Faculty
-                const facultyCount = facultyData.find(item => item.InstitutionName === selectedUniversity).Faculty_Count;
+                const facultyCount = facultyData.find(item => item.InstitutionName === selectedUniversity)?.Faculty_Count;
                 const degrees = filteredData.map(item => item.degrees);
 
                 window.myChart.data.labels = [facultyCount];
