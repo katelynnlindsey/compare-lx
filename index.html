@@ -6,56 +6,33 @@
     <title>Compare LX</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
+    <style>
+        /* Style adjustments */
+        canvas {
+            max-width: 100%;
+            height: auto;
+        }
+    </style>
 </head>
 <body>
     <h1>Welcome to Compare LX</h1>
     <p>This is the homepage for the Compare LX project.</p>
-    <canvas id="myChart" width="400" height="400"></canvas>
+    <canvas id="myChart" width="600" height="400"></canvas>
     
-    <label for="universitySelect">Select University:</label>
-    <select id="universitySelect" onchange="updateChart()">
-        <!-- Dynamically populated options will be added here -->
-    </select>
-
-    <label for="startYear">Start Year:</label>
-    <select id="startYear" onchange="updateChart()">
-        <!-- Options will be added here dynamically -->
-    </select>
-
-    <label for="endYear">End Year:</label>
-    <select id="endYear" onchange="updateChart()">
-        <!-- Options will be added here dynamically -->
-    </select>
-
-    <label for="plotType">Select Plot Type:</label>
-    <select id="plotType" onchange="updateChart()">
-        <option value="time">Degrees by Year</option>
-        <option value="faculty">Degrees vs Faculty</option>
-    </select>
-
     <script>
         var degreesData = [];
         var facultyData = [];
-        var universityNames = [];
-        var yearsAvailable = [];
         
         // Load the degrees CSV
         Papa.parse('./BA-LX-degrees-conferred.csv', {
             download: true,
             header: true,
             complete: function(results) {
-                console.log('Degrees CSV Loaded:', results.data); // Debugging
-
                 degreesData = results.data.map(row => {
                     let institution = row.InstitutionName;
                     let yearsData = [];
-
-                    // Loop through each year (e.g., 2023, 2022, etc.)
                     Object.keys(row).forEach(year => {
                         if (year !== 'InstitutionName') {
-                            if (!yearsAvailable.includes(year)) {
-                                yearsAvailable.push(year);
-                            }
                             yearsData.push({
                                 year: year,
                                 degrees: row[year],
@@ -63,17 +40,8 @@
                             });
                         }
                     });
-                    if (!universityNames.includes(institution)) {
-                        universityNames.push(institution);
-                    }
                     return yearsData;
-                }).flat();  // Flatten the array
-
-                console.log('Degrees Data:', degreesData); // Debugging
-                console.log('University Names:', universityNames); // Debugging
-                console.log('Years Available:', yearsAvailable); // Debugging
-                
-                populateDropdowns();
+                }).flat();
                 if (facultyData.length > 0) {
                     mergeData();
                 }
@@ -85,7 +53,6 @@
             download: true,
             header: true,
             complete: function(results) {
-                console.log('Faculty CSV Loaded:', results.data); // Debugging
                 facultyData = results.data;
                 if (degreesData.length > 0) {
                     mergeData();
@@ -106,59 +73,39 @@
             processMergedData(mergedData);
         }
 
-        // Populate the dropdowns with options
-        function populateDropdowns() {
-            const universitySelect = document.getElementById('universitySelect');
-            universityNames.forEach(name => {
-                let option = document.createElement('option');
-                option.value = name;
-                option.textContent = name;
-                universitySelect.appendChild(option);
-            });
-
-            const startYearSelect = document.getElementById('startYear');
-            const endYearSelect = document.getElementById('endYear');
-            yearsAvailable = [...new Set(yearsAvailable)].sort();  // Remove duplicates and sort
-
-            yearsAvailable.forEach(year => {
-                let optionStart = document.createElement('option');
-                optionStart.value = year;
-                optionStart.textContent = year;
-                startYearSelect.appendChild(optionStart);
-
-                let optionEnd = document.createElement('option');
-                optionEnd.value = year;
-                optionEnd.textContent = year;
-                endYearSelect.appendChild(optionEnd);
-            });
-
-            console.log('Dropdowns Populated'); // Debugging
-        }
-
+        // Process and plot the data
         function processMergedData(data) {
-            console.log('Processed Data:', data); // Debugging
+            console.log(data); // Check the structure of merged data
             createChart();
         }
 
         function createChart() {
-            var ctx = document.getElementById('myChart').getContext('2d');
-            window.myChart = new Chart(ctx, {
-                type: 'bar',
+            window.myChart = new Chart(document.getElementById('myChart').getContext('2d'), {
+                type: 'line',
                 data: {
-                    labels: [],
-                    datasets: [{
-                        label: '',
-                        data: [],
-                        backgroundColor: 'rgba(75, 192, 192, 0.2)',
-                        borderColor: 'rgba(75, 192, 192, 1)',
-                        borderWidth: 1
-                    }]
+                    labels: [], // Will be updated dynamically
+                    datasets: [] // Will be updated dynamically
                 },
                 options: {
                     responsive: true,
-                    scales: {
-                        y: {
-                            beginAtZero: true
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    let label = context.dataset.label || '';
+                                    if (label) {
+                                        label += ': ';
+                                    }
+                                    if (context.parsed.y !== null) {
+                                        label += context.parsed.y;
+                                    }
+                                    return label;
+                                }
+                            }
                         }
                     }
                 }
@@ -166,38 +113,65 @@
         }
 
         function updateChart() {
-            const selectedUniversity = document.getElementById('universitySelect').value;
-            const plotType = document.getElementById('plotType').value;
+            const selectedUniversities = Array.from(document.getElementById('universitySelect').selectedOptions).map(option => option.value);
             const startYear = document.getElementById('startYear').value;
             const endYear = document.getElementById('endYear').value;
 
-            // Filter data for the selected university and year range
+            // Filter data for the selected universities and year range
             const filteredData = degreesData.filter(item => 
-                item.institution === selectedUniversity &&
+                selectedUniversities.includes(item.institution) &&
                 item.year >= startYear && item.year <= endYear
             );
 
-            if (plotType === 'time') {
-                // Plot Degrees vs Year
-                const years = filteredData.map(item => item.year);
-                const degrees = filteredData.map(item => item.degrees);
+            const labels = Array.from(new Set(filteredData.map(item => item.year))).sort();
+            const datasets = selectedUniversities.map(university => {
+                const universityData = filteredData.filter(item => item.institution === university);
+                return {
+                    label: university,
+                    data: labels.map(year => {
+                        const dataPoint = universityData.find(item => item.year === year);
+                        return dataPoint ? dataPoint.degrees : null;
+                    }),
+                    borderColor: getRandomColor(),
+                    backgroundColor: 'rgba(0,0,0,0)',
+                    fill: false
+                };
+            });
 
-                window.myChart.data.labels = years;
-                window.myChart.data.datasets[0].data = degrees;
-                window.myChart.data.datasets[0].label = 'Degrees Conferred';
-                window.myChart.update();
+            // Update chart
+            window.myChart.data.labels = labels;
+            window.myChart.data.datasets = datasets;
+            window.myChart.update();
+        }
 
-            } else if (plotType === 'faculty') {
-                // Plot Degrees vs Faculty
-                const facultyCount = facultyData.find(item => item.InstitutionName === selectedUniversity)?.Faculty_Count;
-                const degrees = filteredData.map(item => item.degrees);
-
-                window.myChart.data.labels = [facultyCount];
-                window.myChart.data.datasets[0].data = degrees;
-                window.myChart.data.datasets[0].label = 'Degrees vs Faculty';
-                window.myChart.update();
+        function getRandomColor() {
+            const letters = '0123456789ABCDEF';
+            let color = '#';
+            for (let i = 0; i < 6; i++) {
+                color += letters[Math.floor(Math.random() * 16)];
             }
+            return color;
         }
     </script>
+    
+    <label for="universitySelect">Select Universities:</label>
+    <select id="universitySelect" multiple onchange="updateChart()">
+        <!-- Dynamically populated options will be added here -->
+    </select>
+
+    <label for="startYear">Start Year:</label>
+    <select id="startYear" onchange="updateChart()">
+        <option value="1999">1999</option>
+        <option value="2000">2000</option>
+        <!-- Add all the years up to 2023 here -->
+    </select>
+
+    <label for="endYear">End Year:</label>
+    <select id="endYear" onchange="updateChart()">
+        <option value="2023">2023</option>
+        <option value="2022">2022</option>
+        <!-- Add all the years here -->
+    </select>
+    
 </body>
 </html>
