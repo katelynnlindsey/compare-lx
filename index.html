@@ -10,10 +10,10 @@
 <body>
     <h1>Welcome to Compare LX</h1>
     <p>This is the homepage for the Compare LX project.</p>
-    <canvas id="myChart" width="400" height="400"></canvas>
+    <canvas id="myChart" width="600" height="400"></canvas>
     
-    <label for="universitySelect">Select University:</label>
-    <select id="universitySelect" onchange="updateChart()">
+    <label for="universitySelect">Select Universities:</label>
+    <select id="universitySelect" multiple onchange="updateChart()">
         <!-- Dynamically populated options will be added here -->
     </select>
 
@@ -143,22 +143,32 @@
         function createChart() {
             var ctx = document.getElementById('myChart').getContext('2d');
             window.myChart = new Chart(ctx, {
-                type: 'bar',
+                type: 'line',
                 data: {
                     labels: [],
-                    datasets: [{
-                        label: '',
-                        data: [],
-                        backgroundColor: 'rgba(75, 192, 192, 0.2)',
-                        borderColor: 'rgba(75, 192, 192, 1)',
-                        borderWidth: 1
-                    }]
+                    datasets: []
                 },
                 options: {
                     responsive: true,
                     scales: {
+                        x: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Year'
+                            }
+                        },
                         y: {
-                            beginAtZero: true
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Degrees Conferred'
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: true
                         }
                     }
                 }
@@ -166,37 +176,60 @@
         }
 
         function updateChart() {
-            const selectedUniversity = document.getElementById('universitySelect').value;
+            const selectedUniversities = Array.from(document.getElementById('universitySelect').selectedOptions).map(option => option.value);
             const plotType = document.getElementById('plotType').value;
             const startYear = document.getElementById('startYear').value;
             const endYear = document.getElementById('endYear').value;
 
-            // Filter data for the selected university and year range
+            // Filter data for the selected universities and year range
             const filteredData = degreesData.filter(item => 
-                item.institution === selectedUniversity &&
+                selectedUniversities.includes(item.institution) &&
                 item.year >= startYear && item.year <= endYear
             );
 
-            if (plotType === 'time') {
-                // Plot Degrees vs Year
-                const years = filteredData.map(item => item.year);
-                const degrees = filteredData.map(item => item.degrees);
+            let datasets = [];
+            selectedUniversities.forEach(university => {
+                const universityData = filteredData.filter(item => item.institution === university);
+                if (plotType === 'time') {
+                    // Plot Degrees vs Year
+                    let data = {
+                        label: university,
+                        data: [],
+                        borderColor: getRandomColor(),
+                        backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                        fill: false
+                    };
+                    let years = [...new Set(universityData.map(item => item.year))].sort();
+                    years.forEach(year => {
+                        let degrees = universityData.find(item => item.year === year)?.degrees || 0;
+                        data.data.push({x: year, y: degrees});
+                    });
+                    datasets.push(data);
+                } else if (plotType === 'faculty') {
+                    // Plot Degrees vs Faculty
+                    const facultyCount = facultyData.find(item => item.InstitutionName === university)?.Faculty_Count;
+                    let data = {
+                        label: university,
+                        data: facultyCount ? [{x: facultyCount, y: universityData.reduce((sum, item) => sum + parseFloat(item.degrees), 0)}] : [],
+                        borderColor: getRandomColor(),
+                        backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                        fill: false
+                    };
+                    datasets.push(data);
+                }
+            });
 
-                window.myChart.data.labels = years;
-                window.myChart.data.datasets[0].data = degrees;
-                window.myChart.data.datasets[0].label = 'Degrees Conferred';
-                window.myChart.update();
+            window.myChart.data.datasets = datasets;
+            window.myChart.update();
+        }
 
-            } else if (plotType === 'faculty') {
-                // Plot Degrees vs Faculty
-                const facultyCount = facultyData.find(item => item.InstitutionName === selectedUniversity)?.Faculty_Count;
-                const degrees = filteredData.map(item => item.degrees);
-
-                window.myChart.data.labels = [facultyCount];
-                window.myChart.data.datasets[0].data = degrees;
-                window.myChart.data.datasets[0].label = 'Degrees vs Faculty';
-                window.myChart.update();
+        function getRandomColor() {
+            const letters = '0123456789ABCDEF';
+            let color = '#';
+            for (let i = 0; i < 6; i++) {
+                color += letters[Math.floor(Math.random() * 16)];
             }
+            return color;
         }
     </script>
 </body>
