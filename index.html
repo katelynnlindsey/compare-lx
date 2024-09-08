@@ -108,32 +108,35 @@
 
         // Populate the dropdowns with options
         function populateDropdowns() {
-            const universitySelect = document.getElementById('universitySelect');
-            universityNames.forEach(name => {
-                let option = document.createElement('option');
-                option.value = name;
-                option.textContent = name;
-                universitySelect.appendChild(option);
-            });
+    const universitySelect = document.getElementById('universitySelect');
+    // Sort the university names alphabetically
+    universityNames.sort((a, b) => a.localeCompare(b));
 
-            const startYearSelect = document.getElementById('startYear');
-            const endYearSelect = document.getElementById('endYear');
-            yearsAvailable = [...new Set(yearsAvailable)].sort();  // Remove duplicates and sort
+    universityNames.forEach(name => {
+        let option = document.createElement('option');
+        option.value = name;
+        option.textContent = name;
+        universitySelect.appendChild(option);
+    });
 
-            yearsAvailable.forEach(year => {
-                let optionStart = document.createElement('option');
-                optionStart.value = year;
-                optionStart.textContent = year;
-                startYearSelect.appendChild(optionStart);
+    const startYearSelect = document.getElementById('startYear');
+    const endYearSelect = document.getElementById('endYear');
+    yearsAvailable = [...new Set(yearsAvailable)].sort();  // Remove duplicates and sort
 
-                let optionEnd = document.createElement('option');
-                optionEnd.value = year;
-                optionEnd.textContent = year;
-                endYearSelect.appendChild(optionEnd);
-            });
+    yearsAvailable.forEach(year => {
+        let optionStart = document.createElement('option');
+        optionStart.value = year;
+        optionStart.textContent = year;
+        startYearSelect.appendChild(optionStart);
 
-            console.log('Dropdowns Populated'); // Debugging
-        }
+        let optionEnd = document.createElement('option');
+        optionEnd.value = year;
+        optionEnd.textContent = year;
+        endYearSelect.appendChild(optionEnd);
+    });
+
+    console.log('Dropdowns Populated'); // Debugging
+}
 
         function processMergedData(data) {
             console.log('Processed Data:', data); // Debugging
