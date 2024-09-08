@@ -12,8 +12,8 @@
     <p>This is the homepage for the Compare LX project.</p>
     <canvas id="myChart" width="600" height="400"></canvas>
     
-    <label for="universitySelect">Select Universities:</label>
-    <select id="universitySelect" multiple onchange="updateChart()">
+    <label for="universitySelect">Select University:</label>
+    <select id="universitySelect" onchange="updateChart()">
         <!-- Dynamically populated options will be added here -->
     </select>
 
@@ -126,54 +126,57 @@
         }
 
         function updateChart() {
-            const selectedUniversities = Array.from(document.getElementById('universitySelect').selectedOptions).map(option => option.value);
+            const selectedUniversity = document.getElementById('universitySelect').value;
             const plotType = document.getElementById('plotType').value;
             const startYear = document.getElementById('startYear').value;
             const endYear = document.getElementById('endYear').value;
 
-            // Filter data for the selected universities and year range
-            const filteredData = degreesData.filter(item => 
-                selectedUniversities.includes(item.institution) &&
-                item.year >= startYear && item.year <= endYear
-            );
-
             let datasets = [];
-            selectedUniversities.forEach(university => {
-                const universityData = filteredData.filter(item => item.institution === university);
+            if (plotType === 'time') {
+                // Handle Degrees by Year
+                const universityData = degreesData.filter(item => 
+                    item.institution === selectedUniversity &&
+                    item.year >= startYear && item.year <= endYear
+                );
 
-                if (plotType === 'time') {
-                    // Plot Degrees vs Year
-                    let data = {
-                        label: university,
-                        data: [],
+                let data = {
+                    label: selectedUniversity,
+                    data: [],
+                    borderColor: getRandomColor(),
+                    backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                    fill: false
+                };
+                let years = [...new Set(universityData.map(item => item.year))].sort();
+                years.forEach(year => {
+                    let degrees = universityData.find(item => item.year === year)?.degrees || 0;
+                    data.data.push({x: year, y: degrees});
+                });
+                datasets.push(data);
+
+            } else if (plotType === 'faculty') {
+                // Handle Degrees vs Faculty
+                const universityData = degreesData.filter(item => 
+                    item.institution === selectedUniversity &&
+                    item.year >= startYear && item.year <= endYear
+                );
+
+                const facultyCount = facultyData.find(item => item.InstitutionName === selectedUniversity)?.Faculty_Count;
+
+                // Calculate average degree conferrals
+                let degreesSum = universityData.reduce((sum, item) => sum + parseFloat(item.degrees), 0);
+                let averageDegrees = universityData.length > 0 ? degreesSum / universityData.length : 0;
+
+                // Ensure degreesSum and facultyCount are valid numbers
+                if (!isNaN(averageDegrees) && facultyCount) {
+                    datasets.push({
+                        label: selectedUniversity,
+                        data: [{x: parseFloat(facultyCount), y: averageDegrees}],
                         borderColor: getRandomColor(),
                         backgroundColor: 'rgba(75, 192, 192, 0.2)',
                         fill: false
-                    };
-                    let years = [...new Set(universityData.map(item => item.year))].sort();
-                    years.forEach(year => {
-                        let degrees = universityData.find(item => item.year === year)?.degrees || 0;
-                        data.data.push({x: year, y: degrees});
                     });
-                    datasets.push(data);
-                } else if (plotType === 'faculty') {
-                    // Plot Degrees vs Faculty
-                    const facultyCount = facultyData.find(item => item.InstitutionName === university)?.Faculty_Count;
-                    let degreesSum = universityData.reduce((sum, item) => sum + parseFloat(item.degrees), 0);
-
-                    // Ensure degreesSum and facultyCount are valid numbers
-                    if (!isNaN(degreesSum) && facultyCount) {
-                        let data = {
-                            label: university,
-                            data: [{x: facultyCount, y: degreesSum}],
-                            borderColor: getRandomColor(),
-                            backgroundColor: 'rgba(75, 192, 192, 0.2)',
-                            fill: false
-                        };
-                        datasets.push(data);
-                    }
                 }
-            });
+            }
 
             // Create or update chart instance
             if (chartInstance) {
@@ -200,7 +203,7 @@
                             beginAtZero: true,
                             title: {
                                 display: true,
-                                text: plotType === 'time' ? 'Degrees Conferred' : 'Degrees Conferred'
+                                text: plotType === 'time' ? 'Degrees Conferred' : 'Average Degrees Conferred'
                             }
                         }
                     },
