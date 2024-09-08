@@ -38,6 +38,7 @@
         var facultyData = [];
         var universityNames = [];
         var yearsAvailable = [];
+        var chartInstance = null;
         
         // Load the degrees CSV
         Papa.parse('./BA-LX-degrees-conferred.csv', {
@@ -75,7 +76,7 @@
                 
                 populateDropdowns();
                 if (facultyData.length > 0) {
-                    mergeData();
+                    updateChart(); // Update chart after both CSVs are loaded
                 }
             }
         });
@@ -88,93 +89,40 @@
                 console.log('Faculty CSV Loaded:', results.data); // Debugging
                 facultyData = results.data;
                 if (degreesData.length > 0) {
-                    mergeData();
+                    updateChart(); // Update chart after both CSVs are loaded
                 }
             }
         });
 
-        // Merge the data from both CSVs
-        function mergeData() {
-            const mergedData = degreesData.map(degree => {
-                const faculty = facultyData.find(fac => fac.InstitutionName === degree.institution);
-                return {
-                    ...degree,
-                    Faculty_Count: faculty ? faculty.Faculty_Count : null
-                };
-            });
-            
-            processMergedData(mergedData);
-        }
-
         // Populate the dropdowns with options
         function populateDropdowns() {
-    const universitySelect = document.getElementById('universitySelect');
-    // Sort the university names alphabetically
-    universityNames.sort((a, b) => a.localeCompare(b));
+            const universitySelect = document.getElementById('universitySelect');
+            universityNames.sort((a, b) => a.localeCompare(b));
 
-    universityNames.forEach(name => {
-        let option = document.createElement('option');
-        option.value = name;
-        option.textContent = name;
-        universitySelect.appendChild(option);
-    });
-
-    const startYearSelect = document.getElementById('startYear');
-    const endYearSelect = document.getElementById('endYear');
-    yearsAvailable = [...new Set(yearsAvailable)].sort();  // Remove duplicates and sort
-
-    yearsAvailable.forEach(year => {
-        let optionStart = document.createElement('option');
-        optionStart.value = year;
-        optionStart.textContent = year;
-        startYearSelect.appendChild(optionStart);
-
-        let optionEnd = document.createElement('option');
-        optionEnd.value = year;
-        optionEnd.textContent = year;
-        endYearSelect.appendChild(optionEnd);
-    });
-
-    console.log('Dropdowns Populated'); // Debugging
-}
-        function processMergedData(data) {
-            console.log('Processed Data:', data); // Debugging
-            createChart();
-        }
-
-        function createChart() {
-            var ctx = document.getElementById('myChart').getContext('2d');
-            window.myChart = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: [],
-                    datasets: []
-                },
-                options: {
-                    responsive: true,
-                    scales: {
-                        x: {
-                            beginAtZero: true,
-                            title: {
-                                display: true,
-                                text: 'Year'
-                            }
-                        },
-                        y: {
-                            beginAtZero: true,
-                            title: {
-                                display: true,
-                                text: 'Degrees Conferred'
-                            }
-                        }
-                    },
-                    plugins: {
-                        legend: {
-                            display: true
-                        }
-                    }
-                }
+            universityNames.forEach(name => {
+                let option = document.createElement('option');
+                option.value = name;
+                option.textContent = name;
+                universitySelect.appendChild(option);
             });
+
+            const startYearSelect = document.getElementById('startYear');
+            const endYearSelect = document.getElementById('endYear');
+            yearsAvailable = [...new Set(yearsAvailable)].sort();  // Remove duplicates and sort
+
+            yearsAvailable.forEach(year => {
+                let optionStart = document.createElement('option');
+                optionStart.value = year;
+                optionStart.textContent = year;
+                startYearSelect.appendChild(optionStart);
+
+                let optionEnd = document.createElement('option');
+                optionEnd.value = year;
+                optionEnd.textContent = year;
+                endYearSelect.appendChild(optionEnd);
+            });
+
+            console.log('Dropdowns Populated'); // Debugging
         }
 
         function updateChart() {
@@ -192,6 +140,7 @@
             let datasets = [];
             selectedUniversities.forEach(university => {
                 const universityData = filteredData.filter(item => item.institution === university);
+
                 if (plotType === 'time') {
                     // Plot Degrees vs Year
                     let data = {
@@ -221,8 +170,43 @@
                 }
             });
 
-            window.myChart.data.datasets = datasets;
-            window.myChart.update();
+            // Create or update chart instance
+            if (chartInstance) {
+                chartInstance.destroy(); // Destroy existing chart instance
+            }
+
+            var ctx = document.getElementById('myChart').getContext('2d');
+            chartInstance = new Chart(ctx, {
+                type: plotType === 'time' ? 'line' : 'scatter',
+                data: {
+                    labels: [],
+                    datasets: datasets
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        x: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: plotType === 'time' ? 'Year' : 'Number of Faculty'
+                            }
+                        },
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: plotType === 'time' ? 'Degrees Conferred' : 'Degrees Conferred'
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: true
+                        }
+                    }
+                }
+            });
         }
 
         function getRandomColor() {
