@@ -76,12 +76,12 @@
 
         // Fetch data
         function fetchData() {
-            Papa.parse('degrees_conferred.csv', {
+            Papa.parse('./BA-LX-degrees-conferred.csv', {
                 download: true,
                 header: true,
                 complete: function(results) {
                     degreesData = parseCSV(results.data);
-                    Papa.parse('core_faculty.csv', {
+                    Papa.parse('./num-core-faculty.csv', {
                         download: true,
                         header: true,
                         complete: function(facultyResults) {
