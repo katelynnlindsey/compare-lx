@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Compare LX</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
 </head>
 <body>
     <h1>Welcome to Compare LX</h1>
@@ -47,5 +48,88 @@
       }
   });
 </script>
+<script>
+  // Load the CSV file
+  Papa.parse('./BA-LX-degrees-conferred.csv', {
+      download: true,
+      header: true, // If your CSV has headers
+      complete: function(results) {
+          processCSVData(results.data);
+      }
+  });
+
+  // Process the CSV data
+  function processCSVData(data) {
+      console.log(data); // This will print the parsed CSV data to your browser's console
+      // You can now work with 'data' to extract universities and years
+  }
+function processCSVData(data) {
+    const universities = [...new Set(data.map(item => item.University))]; // Get unique universities
+    
+    // Populate the university dropdown
+    const universitySelect = document.getElementById('universitySelect');
+    universities.forEach(university => {
+        const option = document.createElement('option');
+        option.value = university;
+        option.text = university;
+        universitySelect.appendChild(option);
+    });
+
+    // Initialize chart
+    createChart();
+}
+
+function createChart() {
+    var ctx = document.getElementById('myChart').getContext('2d');
+    window.myChart = new Chart(ctx, {
+        type: 'line', // You can use 'line' or other types
+        data: {
+            labels: [], // This will hold the years
+            datasets: [{
+                label: 'Degrees Conferred',
+                data: [], // This will hold the degree numbers
+                backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                borderColor: 'rgba(54, 162, 235, 1)',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+}
+
+function updateChart() {
+    const selectedUniversity = document.getElementById('universitySelect').value;
+    const startYear = document.getElementById('startYear').value;
+    const endYear = document.getElementById('endYear').value;
+
+    // Filter data for the selected university and year range
+    const filteredData = data.filter(item => 
+        item.University === selectedUniversity &&
+        item.Year >= startYear && item.Year <= endYear
+    );
+
+    // Update the chart with the filtered data
+    const years = filteredData.map(item => item.Year);
+    const degrees = filteredData.map(item => item.Degrees_Conferred);
+
+    window.myChart.data.labels = years;
+    window.myChart.data.datasets[0].data = degrees;
+    window.myChart.update();
+}
+</script>
+<label for="universitySelect">Select University:</label>
+<select id="universitySelect" onchange="updateChart()">
+    <!-- Dynamically populated options will be added here -->
+</select>
+
+<label for="yearRange">Select Year Range:</label>
+<input type="number" id="startYear" value="1999" min="1999" max="2023" onchange="updateChart()">
+<input type="number" id="endYear" value="2023" min="1999" max="2023" onchange="updateChart()">
 </body>
 </html>
