@@ -159,14 +159,19 @@
                 } else if (plotType === 'faculty') {
                     // Plot Degrees vs Faculty
                     const facultyCount = facultyData.find(item => item.InstitutionName === university)?.Faculty_Count;
-                    let data = {
-                        label: university,
-                        data: facultyCount ? [{x: facultyCount, y: universityData.reduce((sum, item) => sum + parseFloat(item.degrees), 0)}] : [],
-                        borderColor: getRandomColor(),
-                        backgroundColor: 'rgba(75, 192, 192, 0.2)',
-                        fill: false
-                    };
-                    datasets.push(data);
+                    let degreesSum = universityData.reduce((sum, item) => sum + parseFloat(item.degrees), 0);
+
+                    // Ensure degreesSum and facultyCount are valid numbers
+                    if (!isNaN(degreesSum) && facultyCount) {
+                        let data = {
+                            label: university,
+                            data: [{x: facultyCount, y: degreesSum}],
+                            borderColor: getRandomColor(),
+                            backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                            fill: false
+                        };
+                        datasets.push(data);
+                    }
                 }
             });
 
@@ -179,7 +184,6 @@
             chartInstance = new Chart(ctx, {
                 type: plotType === 'time' ? 'line' : 'scatter',
                 data: {
-                    labels: [],
                     datasets: datasets
                 },
                 options: {
