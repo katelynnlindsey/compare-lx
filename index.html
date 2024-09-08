@@ -76,25 +76,20 @@
 
         // Fetch data
         function fetchData() {
-            Papa.parse('./BA-LX-degrees-conferred.csv', {
+            Papa.parse('degrees_conferred.csv', {
                 download: true,
                 header: true,
                 complete: function(results) {
                     degreesData = parseCSV(results.data);
-                    fetchCSV('./num-core-faculty.csv', function(facultyResults) {
-                        facultyData = parseCSV(facultyResults.data);
-                        populateDropdowns();
+                    Papa.parse('core_faculty.csv', {
+                        download: true,
+                        header: true,
+                        complete: function(facultyResults) {
+                            facultyData = parseCSV(facultyResults.data);
+                            populateDropdowns();
+                        }
                     });
                 }
-            });
-        }
-
-        // Fetch CSV data
-        function fetchCSV(url, callback) {
-            Papa.parse(url, {
-                download: true,
-                header: true,
-                complete: callback
             });
         }
 
