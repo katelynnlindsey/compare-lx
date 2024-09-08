@@ -6,30 +6,120 @@
     <title>Compare LX</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap"
+      rel="stylesheet"
+    />
     <style>
-      /* Basic styling for tabs */
+      body {
+        font-family: "Roboto", sans-serif;
+        margin: 0;
+        padding: 0;
+        background-color: #f9fafb;
+        color: #333;
+      }
+
+      h1 {
+        text-align: center;
+        font-size: 2.5rem;
+        margin-top: 20px;
+        color: #003366;
+      }
+
+      p {
+        text-align: center;
+        font-size: 1.2rem;
+        color: #666;
+        margin-bottom: 40px;
+      }
+
       .tab-container {
         display: flex;
-        cursor: pointer;
+        justify-content: center;
         margin-bottom: 20px;
+        border-bottom: 1px solid #ddd;
       }
+
       .tab {
-        padding: 10px;
-        border: 1px solid #ccc;
-        border-radius: 5px 5px 0 0;
+        padding: 10px 20px;
         margin-right: 5px;
-        background-color: #f1f1f1;
+        cursor: pointer;
+        border-radius: 5px 5px 0 0;
+        background-color: #e0e4e8;
+        color: #333;
+        font-weight: 500;
+        transition: background-color 0.3s ease;
       }
+
+      .tab:hover {
+        background-color: #cfd4da;
+      }
+
       .tab-active {
         background-color: white;
         border-bottom: 1px solid white;
         font-weight: bold;
+        color: #003366;
       }
+
       .tab-content {
         display: none;
+        padding: 20px;
+        background-color: white;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        margin: 0 auto;
+        max-width: 90%;
       }
+
       .tab-content.active {
         display: block;
+      }
+
+      fieldset {
+        border: 1px solid #ccc;
+        border-radius: 5px;
+        padding: 20px;
+        margin: 20px auto;
+        max-width: 90%;
+        background-color: #fff;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+      }
+
+      legend {
+        font-size: 1.2rem;
+        color: #003366;
+      }
+
+      label {
+        font-size: 1rem;
+        color: #555;
+        margin-right: 10px;
+      }
+
+      select {
+        padding: 5px;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+        margin: 10px 0;
+        font-size: 1rem;
+      }
+
+      input[type="checkbox"] {
+        margin-right: 10px;
+      }
+
+      @media (max-width: 768px) {
+        .tab {
+          padding: 10px;
+        }
+
+        .tab-content {
+          max-width: 100%;
+        }
+
+        fieldset {
+          max-width: 100%;
+        }
       }
     </style>
   </head>
@@ -40,10 +130,13 @@
     <!-- Tabs for the charts -->
     <div class="tab-container">
       <div class="tab tab-active" onclick="openTab('degreesByYear')">
-        LX Degrees Conferred by Year
+        LX BA Degrees Conferred by Year
+      </div>
+      <div class="tab" onclick="openTab('lxFacultyCount')">
+        Number of LX Faculty (TT/Tenured) in 2019
       </div>
       <div class="tab" onclick="openTab('degreesVsFaculty')">
-        Average LX Degrees Conferred by Number of LX Faculty
+        LX BA Degrees Conferred by Num of LX Faculty
       </div>
     </div>
 
@@ -54,12 +147,11 @@
     <div id="degreesVsFaculty" class="tab-content">
       <canvas id="degreesVsFacultyChart" width="600" height="400"></canvas>
     </div>
+    <div id="lxFacultyCount" class="tab-content">
+      <canvas id="lxFacultyChart" width="600" height="400"></canvas>
+    </div>
 
-    <fieldset id="universityFieldset">
-      <legend>Select Universities:</legend>
-      <!-- Dynamically populated checkboxes will be added here -->
-    </fieldset>
-
+    <!-- Moved the year dropdowns here -->
     <label for="startYear">Start Year:</label>
     <select id="startYear" onchange="updateCharts()">
       <!-- Options will be added here dynamically -->
@@ -70,6 +162,11 @@
       <!-- Options will be added here dynamically -->
     </select>
 
+    <fieldset id="universityFieldset">
+      <legend>Select Universities:</legend>
+      <!-- Dynamically populated checkboxes will be added here -->
+    </fieldset>
+
     <script>
       var degreesData = [];
       var facultyData = [];
@@ -77,14 +174,13 @@
       var yearsAvailable = [];
       var degreesByYearChart = null;
       var degreesVsFacultyChart = null;
+      var lxFacultyChart = null; // New chart variable
 
       // Load the degrees CSV
       Papa.parse("./BA-LX-degrees-conferred.csv", {
         download: true,
         header: true,
         complete: function (results) {
-          console.log("Degrees CSV Loaded:", results.data); // Debugging
-
           degreesData = results.data.map((row) => {
             let institution = row.InstitutionName;
             if (!universityNames.includes(institution)) {
@@ -94,22 +190,17 @@
             // Capture years from the data for dropdowns
             for (let year in row) {
               if (year.match(/^\d{4}$/)) {
-                // Match years in format YYYY
                 if (!yearsAvailable.includes(year)) {
                   yearsAvailable.push(year);
                 }
               }
             }
-
-            return row; // Return the whole row for further processing
+            return row;
           });
-
-          console.log("Degrees Data:", degreesData); // Debugging
-          console.log("University Names:", universityNames); // Debugging
 
           populateDropdowns();
           if (facultyData.length > 0) {
-            updateCharts(); // Update charts after both CSVs are loaded
+            updateCharts();
           }
         },
       });
@@ -119,10 +210,9 @@
         download: true,
         header: true,
         complete: function (results) {
-          console.log("Faculty CSV Loaded:", results.data); // Debugging
           facultyData = results.data;
           if (degreesData.length > 0) {
-            updateCharts(); // Update charts after both CSVs are loaded
+            updateCharts();
           }
         },
       });
@@ -154,7 +244,7 @@
 
         const startYearSelect = document.getElementById("startYear");
         const endYearSelect = document.getElementById("endYear");
-        yearsAvailable = [...new Set(yearsAvailable)].sort(); // Remove duplicates and sort
+        yearsAvailable = [...new Set(yearsAvailable)].sort();
 
         yearsAvailable.forEach((year) => {
           let optionStart = document.createElement("option");
@@ -168,15 +258,12 @@
           endYearSelect.appendChild(optionEnd);
         });
 
-        // Set default values for start and end year
         if (yearsAvailable.length > 0) {
-          startYearSelect.value = yearsAvailable[0]; // Set default start year
+          startYearSelect.value = yearsAvailable[0];
           endYearSelect.value = yearsAvailable.includes("2023")
             ? "2023"
-            : yearsAvailable[yearsAvailable.length - 1]; // Set default end year to 2023 if available, otherwise the latest year
+            : yearsAvailable[yearsAvailable.length - 1];
         }
-
-        console.log("Dropdowns Populated"); // Debugging
       }
 
       function updateCharts() {
@@ -185,6 +272,54 @@
         ).map((checkbox) => checkbox.value);
         const startYear = document.getElementById("startYear").value;
         const endYear = document.getElementById("endYear").value;
+
+        // Update LX Faculty Chart
+        let lxFacultyData = selectedUniversities.map((university) => {
+          let facultyCount = facultyData.find(
+            (item) => item.InstitutionName === university
+          )?.["2019"]; // Assuming "2019" is the year column in your CSV
+
+          return { university, facultyCount: parseFloat(facultyCount) || 0 };
+        });
+
+        if (lxFacultyChart) {
+          lxFacultyChart.destroy();
+        }
+
+        var ctx3 = document.getElementById("lxFacultyChart").getContext("2d");
+        lxFacultyChart = new Chart(ctx3, {
+          type: "bar",
+          data: {
+            labels: lxFacultyData.map((item) => item.university),
+            datasets: [
+              {
+                label: "Number of LX Faculty",
+                data: lxFacultyData.map((item) => item.facultyCount),
+                backgroundColor: "rgba(75, 192, 192, 0.2)",
+                borderColor: "rgba(75, 192, 192, 1)",
+                borderWidth: 1,
+              },
+            ],
+          },
+          options: {
+            responsive: true,
+            scales: {
+              x: {
+                title: {
+                  display: true,
+                  text: "University",
+                },
+              },
+              y: {
+                beginAtZero: true,
+                title: {
+                  display: true,
+                  text: "Number of Faculty",
+                },
+              },
+            },
+          },
+        });
 
         // Degrees by Year Chart
         let degreesByYearDatasets = [];
@@ -333,24 +468,29 @@
         });
       }
 
-      function openTab(tabId) {
-        document.querySelectorAll(".tab").forEach((tab) => {
-          tab.classList.remove("tab-active");
-        });
-        document.querySelectorAll(".tab-content").forEach((content) => {
-          content.classList.remove("active");
-        });
+      function openTab(tabName) {
+        var i;
+        var x = document.getElementsByClassName("tab-content");
+        for (i = 0; i < x.length; i++) {
+          x[i].style.display = "none";
+        }
+        document.getElementById(tabName).style.display = "block";
 
+        // Change tab active state
+        var tabs = document.getElementsByClassName("tab");
+        for (i = 0; i < tabs.length; i++) {
+          tabs[i].classList.remove("tab-active");
+        }
         document
-          .querySelector(`.tab[onclick="openTab('${tabId}')"]`)
+          .querySelector(`[onclick="openTab('${tabName}')"]`)
           .classList.add("tab-active");
-        document.getElementById(tabId).classList.add("active");
       }
 
       function getRandomColor() {
-        const letters = "0123456789ABCDEF";
-        let color = "#";
-        for (let i = 0; i < 6; i++) {
+        // Generate a random color for chart lines
+        var letters = "0123456789ABCDEF";
+        var color = "#";
+        for (var i = 0; i < 6; i++) {
           color += letters[Math.floor(Math.random() * 16)];
         }
         return color;
