@@ -7,60 +7,67 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
     <style>
-        /* Style adjustments */
         canvas {
             max-width: 100%;
             height: auto;
+        }
+        #loading {
+            display: none;
         }
     </style>
 </head>
 <body>
     <h1>Welcome to Compare LX</h1>
     <p>This is the homepage for the Compare LX project.</p>
+    <div id="loading">Loading data...</div>
     <canvas id="myChart" width="600" height="400"></canvas>
     
     <script>
         var degreesData = [];
         var facultyData = [];
-        
-        // Load the degrees CSV
-        Papa.parse('./BA-LX-degrees-conferred.csv', {
-            download: true,
-            header: true,
-            complete: function(results) {
-                degreesData = results.data.map(row => {
-                    let institution = row.InstitutionName;
-                    let yearsData = [];
-                    Object.keys(row).forEach(year => {
-                        if (year !== 'InstitutionName') {
-                            yearsData.push({
-                                year: year,
-                                degrees: row[year],
-                                institution: institution
-                            });
-                        }
-                    });
-                    return yearsData;
-                }).flat();
-                if (facultyData.length > 0) {
-                    mergeData();
-                }
-            }
-        });
 
-        // Load the faculty CSV
-        Papa.parse('./num-core-faculty.csv', {
-            download: true,
-            header: true,
-            complete: function(results) {
-                facultyData = results.data;
-                if (degreesData.length > 0) {
-                    mergeData();
-                }
-            }
-        });
+        function showLoading(show) {
+            document.getElementById('loading').style.display = show ? 'block' : 'none';
+        }
 
-        // Merge the data from both CSVs
+        function fetchData() {
+            showLoading(true);
+            Papa.parse('./BA-LX-degrees-conferred.csv', {
+                download: true,
+                header: true,
+                complete: function(results) {
+                    degreesData = results.data.map(row => {
+                        let institution = row.InstitutionName;
+                        let yearsData = [];
+                        Object.keys(row).forEach(year => {
+                            if (year !== 'InstitutionName') {
+                                yearsData.push({
+                                    year: year,
+                                    degrees: row[year],
+                                    institution: institution
+                                });
+                            }
+                        });
+                        return yearsData;
+                    }).flat();
+                    if (facultyData.length > 0) {
+                        mergeData();
+                    }
+                }
+            });
+
+            Papa.parse('./num-core-faculty.csv', {
+                download: true,
+                header: true,
+                complete: function(results) {
+                    facultyData = results.data;
+                    if (degreesData.length > 0) {
+                        mergeData();
+                    }
+                }
+            });
+        }
+
         function mergeData() {
             const mergedData = degreesData.map(degree => {
                 const faculty = facultyData.find(fac => fac.InstitutionName === degree.institution);
@@ -69,22 +76,21 @@
                     Faculty_Count: faculty ? faculty.Faculty_Count : null
                 };
             });
-            
             processMergedData(mergedData);
         }
 
-        // Process and plot the data
         function processMergedData(data) {
-            console.log(data); // Check the structure of merged data
+            console.log(data);
             createChart();
+            showLoading(false);
         }
 
         function createChart() {
             window.myChart = new Chart(document.getElementById('myChart').getContext('2d'), {
                 type: 'line',
                 data: {
-                    labels: [], // Will be updated dynamically
-                    datasets: [] // Will be updated dynamically
+                    labels: [],
+                    datasets: []
                 },
                 options: {
                     responsive: true,
@@ -117,7 +123,6 @@
             const startYear = document.getElementById('startYear').value;
             const endYear = document.getElementById('endYear').value;
 
-            // Filter data for the selected universities and year range
             const filteredData = degreesData.filter(item => 
                 selectedUniversities.includes(item.institution) &&
                 item.year >= startYear && item.year <= endYear
@@ -138,7 +143,6 @@
                 };
             });
 
-            // Update chart
             window.myChart.data.labels = labels;
             window.myChart.data.datasets = datasets;
             window.myChart.update();
@@ -152,6 +156,8 @@
             }
             return color;
         }
+
+        window.onload = fetchData;
     </script>
     
     <label for="universitySelect">Select Universities:</label>
