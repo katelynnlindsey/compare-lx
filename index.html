@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Compare LX</title>
+    <title>Linguistics Departments Data</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels"></script>
@@ -125,8 +125,47 @@
     </style>
   </head>
   <body>
-    <h1>Welcome to Compare LX</h1>
-    <p>This is the homepage for the Compare LX project.</p>
+    <main>
+      <header>
+        <h1>Data on Linguistics Departments in North America</h1>
+      </header>
+
+      <section>
+        <p>
+          Welcome to the visualization platform for data on linguistics
+          departments across North America.
+        </p>
+
+        <p>
+          Degree conferral data is sourced from the
+          <a
+            href="https://nces.ed.gov/ipeds/use-the-data"
+            target="_blank"
+            rel="noopener"
+            >IPEDS Data Center</a
+          >. Faculty data is provided by the
+          <a
+            href="https://biasinlinguistics.org/"
+            target="_blank"
+            rel="noopener"
+            >Bias in Linguistics</a
+          >
+          project. Course requirement data for linguistics BA degrees was
+          collected by analyzing individual department websites during 2023 and
+          2024.
+        </p>
+
+        <p>
+          You can access and download the raw data on our
+          <a
+            href="https://github.com/katelynnlindsey/compare-lx"
+            target="_blank"
+            rel="noopener"
+            >GitHub repository</a
+          >.
+        </p>
+      </section>
+    </main>
 
     <!-- Tabs for the charts -->
     <div class="tab-container">
@@ -227,7 +266,7 @@
         header: true,
         download: true,
         complete: function (results) {
-          reqData = results.data;
+          reqData = results.data.sort((a, b) => b.courses - a.courses);
           console.log(reqData); // Check if reqData is loaded correctly
           updateCharts(); // Call updateCharts after data is loaded
         },
@@ -494,7 +533,7 @@
                 ticks: {
                   autoSkip: false,
                   maxRotation: 90,
-                  minRotation: 90,
+                  minRotation: 0,
                 },
               },
               y: {
@@ -512,8 +551,16 @@
               legend: {
                 display: true,
               },
+              datalabels: {
+                formatter: function (value) {
+                  return value.y; // Show only the y value (e.g., 10)
+                },
+                anchor: "end", // Position the label at the end of the bar
+                align: "bottom", // Align the label at the top of the bar
+              },
             },
           },
+          plugins: [ChartDataLabels],
         });
       }
 
