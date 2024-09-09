@@ -6,6 +6,7 @@
     <title>Compare LX</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels"></script>
     <link
       href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap"
       rel="stylesheet"
@@ -68,7 +69,7 @@
         background-color: white;
         box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
         margin: 0 auto;
-        max-width: 90%;
+        max-width: 50%;
       }
 
       .tab-content.active {
@@ -80,7 +81,7 @@
         border-radius: 5px;
         padding: 20px;
         margin: 20px auto;
-        max-width: 90%;
+        max-width: 75%;
         background-color: #fff;
         box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
       }
@@ -135,8 +136,8 @@
       <div class="tab" onclick="openTab('lxFacultyCount')">
         Number of LX Faculty (TT/Tenured) in 2019
       </div>
-      <div class="tab" onclick="openTab('degreesVsFaculty')">
-        LX BA Degrees Conferred by Num of LX Faculty
+      <div class="tab" onclick="openTab('linguisticDegreeRequirements')">
+        LX BA Degree Course Reqs
       </div>
     </div>
 
@@ -144,11 +145,15 @@
     <div id="degreesByYear" class="tab-content active">
       <canvas id="degreesByYearChart" width="600" height="400"></canvas>
     </div>
-    <div id="degreesVsFaculty" class="tab-content">
-      <canvas id="degreesVsFacultyChart" width="600" height="400"></canvas>
-    </div>
     <div id="lxFacultyCount" class="tab-content">
       <canvas id="lxFacultyChart" width="600" height="400"></canvas>
+    </div>
+    <div id="linguisticDegreeRequirements" class="tab-content">
+      <canvas
+        id="linguisticDegreeRequirementsChart"
+        width="600"
+        height="400"
+      ></canvas>
     </div>
 
     <!-- Moved the year dropdowns here -->
@@ -173,8 +178,8 @@
       var universityNames = [];
       var yearsAvailable = [];
       var degreesByYearChart = null;
-      var degreesVsFacultyChart = null;
-      var lxFacultyChart = null; // New chart variable
+      var lxFacultyChart = null;
+      var linguisticDegreeRequirementsChart = null; // New chart variable
 
       // Load the degrees CSV
       Papa.parse("./BA-LX-degrees-conferred.csv", {
@@ -214,6 +219,17 @@
           if (degreesData.length > 0) {
             updateCharts();
           }
+        },
+      });
+
+      // Load the degree requirements CSV
+      Papa.parse("./BA-LX-reqs.csv", {
+        header: true,
+        download: true,
+        complete: function (results) {
+          reqData = results.data;
+          console.log(reqData); // Check if reqData is loaded correctly
+          updateCharts(); // Call updateCharts after data is loaded
         },
       });
 
@@ -273,7 +289,7 @@
         const startYear = document.getElementById("startYear").value;
         const endYear = document.getElementById("endYear").value;
 
-        // Update LX Faculty Chart
+        // Filter faculty data based on selected universities
         let lxFacultyData = selectedUniversities.map((university) => {
           let facultyCount = facultyData.find(
             (item) => item.InstitutionName === university
@@ -281,6 +297,8 @@
 
           return { university, facultyCount: parseFloat(facultyCount) || 0 };
         });
+
+        lxFacultyData.sort((a, b) => b.facultyCount - a.facultyCount);
 
         if (lxFacultyChart) {
           lxFacultyChart.destroy();
@@ -303,13 +321,8 @@
           },
           options: {
             responsive: true,
+            indexAxis: "x",
             scales: {
-              x: {
-                title: {
-                  display: true,
-                  text: "University",
-                },
-              },
               y: {
                 beginAtZero: true,
                 title: {
@@ -318,10 +331,16 @@
                 },
               },
             },
+            plugins: {
+              legend: {
+                display: false,
+              },
+            },
           },
+          plugins: [ChartDataLabels],
         });
 
-        // Degrees by Year Chart
+        // Filter degrees data based on selected universities and year range
         let degreesByYearDatasets = [];
         selectedUniversities.forEach((university) => {
           const universityData = degreesData.filter(
@@ -358,9 +377,8 @@
           }
         });
 
-        // Create or update Degrees by Year Chart
         if (degreesByYearChart) {
-          degreesByYearChart.destroy(); // Destroy existing chart instance
+          degreesByYearChart.destroy();
         }
         var ctx1 = document
           .getElementById("degreesByYearChart")
@@ -402,46 +420,65 @@
           },
         });
 
-        // Degrees vs Faculty Chart
-        let degreesVsFacultyDatasets = [];
+        // Prepare data for the linguisticDegreeRequirementsChart
+        let semesterData = [];
+        let quarterData = [];
+
         selectedUniversities.forEach((university) => {
-          const universityAverage = degreesData.find(
-            (item) => item.InstitutionName === university
-          )?.["Average"];
-          const facultyCount = facultyData.find(
-            (item) => item.InstitutionName === university
-          )?.["2019"];
+          const universityData = reqData.filter(
+            (item) => item.School === university
+          );
 
-          // Ensure valid numbers
-          if (!isNaN(universityAverage) && facultyCount) {
-            let data = {
-              label: university,
-              data: [
-                {
-                  x: parseFloat(facultyCount),
-                  y: parseFloat(universityAverage),
-                },
-              ],
-              borderColor: getRandomColor(),
-              backgroundColor: "rgba(75, 192, 192, 0.2)",
-              fill: false,
-            };
-
-            degreesVsFacultyDatasets.push(data);
-          }
+          universityData.forEach((row) => {
+            if (row.TermType.toLowerCase() === "semesters") {
+              semesterData.push({
+                university,
+                courses: parseFloat(row.Courses) || 0,
+              });
+            } else if (row.TermType.toLowerCase() === "quarters") {
+              quarterData.push({
+                university,
+                courses: parseFloat(row.Courses) || 0,
+              });
+            }
+          });
         });
 
-        // Create or update Degrees vs Faculty Chart
-        if (degreesVsFacultyChart) {
-          degreesVsFacultyChart.destroy(); // Destroy existing chart instance
+        // Sort the data by the number of courses in descending order
+        semesterData.sort((a, b) => b.courses - a.courses);
+        quarterData.sort((a, b) => b.courses - a.courses);
+
+        // Create datasets for the chart
+        let semesterDataset = {
+          label: "Semester System",
+          data: semesterData.map((item) => ({
+            x: item.university,
+            y: item.courses,
+          })),
+          backgroundColor: "rgba(75, 192, 192, 0.5)",
+        };
+
+        let quarterDataset = {
+          label: "Quarter System",
+          data: quarterData.map((item) => ({
+            x: item.university,
+            y: item.courses,
+          })),
+          backgroundColor: "rgba(255, 159, 64, 0.5)",
+        };
+
+        if (linguisticDegreeRequirementsChart) {
+          linguisticDegreeRequirementsChart.destroy();
         }
-        var ctx2 = document
-          .getElementById("degreesVsFacultyChart")
+
+        var ctx4 = document
+          .getElementById("linguisticDegreeRequirementsChart")
           .getContext("2d");
-        degreesVsFacultyChart = new Chart(ctx2, {
-          type: "scatter",
+        linguisticDegreeRequirementsChart = new Chart(ctx4, {
+          type: "bar",
           data: {
-            datasets: degreesVsFacultyDatasets,
+            labels: selectedUniversities,
+            datasets: [semesterDataset, quarterDataset],
           },
           options: {
             responsive: true,
@@ -449,13 +486,25 @@
               x: {
                 title: {
                   display: true,
-                  text: "Faculty Count",
+                  text: "University",
+                  font: {
+                    weight: "bold",
+                  },
+                },
+                ticks: {
+                  autoSkip: false,
+                  maxRotation: 90,
+                  minRotation: 90,
                 },
               },
               y: {
+                beginAtZero: true,
                 title: {
                   display: true,
-                  text: "Degrees Conferred",
+                  text: "Number of Courses Required by LX BA Major",
+                  font: {
+                    weight: "bold",
+                  },
                 },
               },
             },
