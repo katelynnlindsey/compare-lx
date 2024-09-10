@@ -172,6 +172,9 @@
       <div class="tab tab-active" onclick="openTab('degreesByYear')">
         LX BA Degrees Conferred by Year
       </div>
+      <div class="tab" onclick="openTab('phdByYear')">
+        LX PhD Degrees Conferred by Year
+      </div>
       <div class="tab" onclick="openTab('lxFacultyCount')">
         Number of LX Faculty (TT/Tenured) in 2019
       </div>
@@ -183,6 +186,9 @@
     <!-- Tab content for charts -->
     <div id="degreesByYear" class="tab-content active">
       <canvas id="degreesByYearChart" width="600" height="400"></canvas>
+    </div>
+    <div id="phdByYear" class="tab-content">
+      <canvas id="phdByYearChart" width="600" height="400"></canvas>
     </div>
     <div id="lxFacultyCount" class="tab-content">
       <canvas id="lxFacultyChart" width="600" height="400"></canvas>
@@ -212,13 +218,15 @@
     </fieldset>
 
     <script>
+      var phdData = [];
       var degreesData = [];
       var facultyData = [];
       var universityNames = [];
       var yearsAvailable = [];
       var degreesByYearChart = null;
       var lxFacultyChart = null;
-      var linguisticDegreeRequirementsChart = null; // New chart variable
+      var linguisticDegreeRequirementsChart = null;
+      var phdByYearChart = null; // New chart variable
 
       // Load the degrees CSV
       Papa.parse("./BA-LX-degrees-conferred.csv", {
@@ -256,6 +264,18 @@
         complete: function (results) {
           facultyData = results.data;
           if (degreesData.length > 0) {
+            updateCharts();
+          }
+        },
+      });
+
+      // Load the PhD Degrees CSV
+      Papa.parse("./PHD-LX-degrees-conferred.csv", {
+        download: true,
+        header: true,
+        complete: function (results) {
+          phdData = results.data;
+          if (phdData.length > 0) {
             updateCharts();
           }
         },
@@ -447,7 +467,7 @@
                 beginAtZero: true,
                 title: {
                   display: true,
-                  text: "Number of Degrees Conferred",
+                  text: "Number of BA Degrees Conferred",
                 },
               },
             },
@@ -561,6 +581,84 @@
             },
           },
           plugins: [ChartDataLabels],
+        });
+
+        // Prepare data for the phdByYearChart
+        let phdByYearDatasets = [];
+        selectedUniversities.forEach((university) => {
+          const universityData = phdData.filter(
+            (item) => item.InstitutionName === university
+          );
+
+          let dataset = {
+            label: university,
+            data: [],
+            borderColor: getRandomColor(),
+            backgroundColor: "rgba(75, 192, 192, 0.2)",
+            fill: false,
+          };
+
+          yearsAvailable.forEach((year) => {
+            if (
+              parseInt(year) >= parseInt(startYear) &&
+              parseInt(year) <= parseInt(endYear)
+            ) {
+              let degrees = 0;
+
+              universityData.forEach((row) => {
+                if (row[year]) {
+                  degrees += parseFloat(row[year]);
+                }
+              });
+
+              dataset.data.push({ x: parseInt(year), y: degrees });
+            }
+          });
+
+          if (dataset.data.length > 0) {
+            phdByYearDatasets.push(dataset);
+          }
+        });
+
+        if (phdByYearChart) {
+          phdByYearChart.destroy();
+        }
+        var ctx1 = document.getElementById("phdByYearChart").getContext("2d");
+        phdByYearChart = new Chart(ctx1, {
+          type: "line",
+          data: {
+            datasets: phdByYearDatasets,
+          },
+          options: {
+            responsive: true,
+            scales: {
+              x: {
+                type: "linear",
+                position: "bottom",
+                title: {
+                  display: true,
+                  text: "Year",
+                },
+                ticks: {
+                  callback: function (value, index, values) {
+                    return value; // Display year as-is
+                  },
+                },
+              },
+              y: {
+                beginAtZero: true,
+                title: {
+                  display: true,
+                  text: "Number of PhD Degrees Conferred",
+                },
+              },
+            },
+            plugins: {
+              legend: {
+                display: true,
+              },
+            },
+          },
         });
       }
 
