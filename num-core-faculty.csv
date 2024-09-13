@@ -1,50 +1,70 @@
-InstitutionName,2019
-Boston University,10
-Carnegie Mellon University,14
-Cornell University,15
-CUNY Queens College,30
-Georgetown University,23
-Harvard University,10
-Indiana University-Bloomington,15
-Johns Hopkins University,10
-Michigan State University,10
-MIT,17
-New York University,24
-Northwestern University,8
-Ohio State University-Main Campus,16
-Purdue University-Main Campus,27
-Rice University,6
-Rutgers University-New Brunswick,16
-San Diego State University,5
-Stanford University,15
-Stony Brook University,18
-University at Buffalo (SUNY),13
-University of Arizona,20
-University of California-Berkeley,13
-University of California-Los Angeles,18
-University of California-San Diego,13
-University of California-Santa Barbara,16
-University of California-Santa Cruz,14
-University of Chicago,17
-University of Colorado-Boulder,10
-University of Connecticut,11
-University of Delaware,12
-University of Florida,27
-University of Georgia,14
-University of Hawaii-Manoa,8
-University of Illinois-Urbana-Champaign,16
-University of Iowa,8
-University of Kansas,9
-University of Louisiana-Lafayette,2
-University of Maryland-College Park,14
-University of Massachusetts-Amherst,20
-University of Michigan-Ann Arbor,17
-University of Minnesota-Twin Cities,6
-University of New Mexico-Main Campus,14
-University of Oregon,13
-University of Pennsylvania,21
-University of Southern California,23
-University of Texas at Austin,21
-University of Washington-Seattle Campus,18
-University of Wisconsin at Madison,8
-Yale University,10
+InstitutionName	2019
+Boston University	10
+Carnegie Mellon University	14
+Cornell University	14
+CUNY Queens College	30
+Dartmouth	
+Gallaudet University	8
+Georgetown University	20
+Harvard University	10
+Indiana University-Bloomington	14
+Johns Hopkins University	10
+McGill	13
+Memorial University of Newfoundland	10
+Michigan State University	10
+MIT	17
+New York University	22
+Northwestern University	8
+Ohio State University-Main Campus	16
+Purdue University-Main Campus	27
+Rice University	6
+Rutgers University-New Brunswick	15
+San Diego State University	5
+Simon Fraser University	15
+Stanford University	15
+State University of New York at Stony Brook	18
+University at Buffalo (SUNY)	13
+University of Alberta	14
+University of Arizona	21
+University of British Columbia	15
+University of Calgary	9
+University of California-Berkeley	14
+University of California-Davis	10
+University of California-Los Angeles	18
+University of California-San Diego	14
+University of California-Santa Barbara	14
+University of California-Santa Cruz	13
+University of Chicago	17
+University of Colorado-Boulder	11
+University of Connecticut	11
+University of Delaware	14
+University of Florida	19
+University of Georgia	13
+University of Hawaii-Manoa	10
+University of Illinois-Urbana-Champaign	17
+University of Iowa	8
+University of Kansas	10
+University of Louisiana-Lafayette	2
+University of Manitoba	10
+University of Maryland-College Park	14
+University of Massachusetts-Amherst	18
+University of Michigan-Ann Arbor	17
+University of Minnesota-Twin Cities	5
+University of New Mexico-Main Campus	12
+University of Oregon	12
+University of Ottawa	10
+University of Pennsylvania	18
+University of Pittsburgh	7
+University of Rochester	8
+University of South Carolina	15
+University of Southern California	22
+University of Texas-Arlington	8
+University of Texas-Austin	19
+University of Toronto	26
+University of Utah	11
+University of Victoria	11
+University of Washington	15
+University of Wisconsin-Madison	6
+University of Wisconsin-Milwaukee	8
+Yale University	9
+York University	9
