@@ -143,6 +143,13 @@
             target="_blank"
             rel="noopener"
             >IPEDS Data Center</a
+          >
+          and only counts degrees conferred with the
+          <a
+            href="https://nces.ed.gov/ipeds/cipcode/cipdetail.aspx?y=55&cipid=88294#:~:text=Title%3A%20Linguistics."
+            target="_blank"
+            rel="noopener"
+            >16.0102' - Linguistics CIP code</a
           >. Faculty data is provided by the
           <a
             href="https://biasinlinguistics.org/"
@@ -150,13 +157,18 @@
             rel="noopener"
             >Bias in Linguistics</a
           >
-          project. Course requirement data for linguistics BA degrees was
-          collected by analyzing individual department websites during 2023 and
-          2024.
+          project and
+          <a
+            href="https://www.cambridge.org/core/journals/canadian-journal-of-linguistics-revue-canadienne-de-linguistique/article/snapshot-of-academic-job-placements-in-linguistics-in-the-us-and-canada/C1F889807A45010A4DFA8BEC0E97BD3B#supplementary-materials"
+            target="_blank"
+            rel="noopener"
+            >Haugen et al. (2024)</a
+          >. Course requirement data for linguistics BA degrees was collected by
+          analyzing individual department websites during 2023 and 2024.
         </p>
 
         <p>
-          You can access and download the raw data on our
+          You can access and download the raw data on my
           <a
             href="https://github.com/katelynnlindsey/compare-lx"
             target="_blank"
@@ -499,7 +511,7 @@
 
         selectedUniversities.forEach((university) => {
           const universityData = reqData.filter(
-            (item) => item.School === university
+            (item) => item.InstitutionName === university
           );
 
           universityData.forEach((row) => {
